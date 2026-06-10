@@ -1,0 +1,24 @@
+node_modules/
+.DS_Store
+*.log
+_deploy_temp/
+
+# 数据目录（员工数据、提交记录等敏感信息只在本地保存）
+data/
+
+# debug/investigation scripts
+analyze-pk.js
+extract-*.js
+find-*.js
+inspect-*.js
+list-*.js
+parse-*.js
+read-*.js
+search-*.js
+read-via-com.ps1
+
+# test exports
+test_export*.xlsx
+
+# zip archives
+embedded*.zip
