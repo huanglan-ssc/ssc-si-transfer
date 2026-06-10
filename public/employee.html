@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社保转移情况确认</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .header {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .header h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      color: #1a1a1a;
+    }
+    .header p {
+      margin: 0;
+      color: #555;
+      font-size: 15px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin: 0 0 16px;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #1677ff;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .form-row {
+      margin-bottom: 16px;
+    }
+    .form-row:last-child { margin-bottom: 0; }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #444;
+    }
+    label .required {
+      color: #ff4d4f;
+      margin-left: 2px;
+    }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #1677ff;
+      box-shadow: 0 0 0 3px rgba(22,119,255,0.1);
+    }
+    input[readonly] {
+      background: #f5f5f5;
+      color: #888;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .match-hint {
+      font-size: 12px;
+      color: #52c41a;
+      margin-top: 4px;
+      display: none;
+    }
+    .match-hint.visible { display: block; }
+    .match-hint.error { color: #ff4d4f; }
+
+    .match-dropdown {
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      margin-top: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .match-dropdown.visible { display: block; }
+    .match-dropdown-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .match-dropdown-item:last-child { border-bottom: none; }
+    .match-dropdown-item:hover { background: #f0f5ff; }
+    .match-dropdown-item .emp-name { font-weight: 500; color: #333; }
+    .match-dropdown-item .emp-meta { color: #888; font-size: 12px; margin-top: 2px; }
+
+    .locked-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      border-radius: 8px;
+      margin-top: 4px;
+    }
+    .locked-row .locked-label { font-size: 14px; color: #389e0d; }
+    .locked-row .locked-value { font-weight: 600; color: #1a1a1a; }
+    .locked-row .btn-unlock {
+      margin-left: auto;
+      font-size: 12px;
+      color: #1677ff;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .locked-row .btn-unlock:hover { text-decoration: underline; }
+
+    .category-card {
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      background: #fafafa;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .category-header:hover {
+      background: #f0f5ff;
+    }
+    .category-header input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #1677ff;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .category-header .category-name {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 500;
+      color: #333;
+    }
+    .category-header .category-arrow {
+      font-size: 12px;
+      color: #999;
+      transition: transform 0.2s;
+    }
+    .category-header.expanded .category-arrow {
+      transform: rotate(180deg);
+    }
+    .category-body {
+      display: none;
+      padding: 12px 16px 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .category-body.expanded {
+      display: block;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      background: #fafafa;
+    }
+    .checkbox-item:hover {
+      background: #f0f5ff;
+      border-color: #1677ff;
+    }
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: #1677ff;
+      flex-shrink: 0;
+    }
+    .checkbox-item .text {
+      flex: 1;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .impact-box {
+      background: #fff7e6;
+      border: 1px solid #ffd591;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 8px;
+      font-size: 14px;
+      color: #5c3b00;
+      display: none;
+    }
+    .impact-box.visible { display: block; }
+    .impact-box .impact-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #874d00;
+    }
+
+    .custom-input {
+      margin-top: 10px;
+      display: none;
+    }
+    .custom-input.visible { display: block; }
+    .custom-input input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .custom-input input:focus {
+      outline: none;
+      border-color: #1677ff;
+      box-shadow: 0 0 0 3px rgba(22,119,255,0.1);
+    }
+    .custom-input label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      background: #fafafa;
+    }
+    .radio-item:hover {
+      background: #f0f5ff;
+      border-color: #1677ff;
+    }
+    .radio-item input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #1677ff;
+      flex-shrink: 0;
+    }
+    .radio-item .text {
+      font-size: 15px;
+      color: #333;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-primary {
+      background: #1677ff;
+      color: #fff;
+      width: 100%;
+    }
+    .btn-primary:hover { opacity: 0.92; }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn:disabled {
+      background: #bfbfbf;
+      cursor: not-allowed;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      margin-top: 16px;
+    }
+
+    .success-page {
+      display: none;
+      text-align: center;
+      padding: 40px 24px;
+    }
+    .success-page.active { display: block; }
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      background: #f6ffed;
+      border: 2px solid #52c41a;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: #52c41a;
+      margin-bottom: 20px;
+    }
+    .success-page h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+      color: #1a1a1a;
+    }
+    .success-page p {
+      color: #555;
+      font-size: 15px;
+      margin: 0 0 8px;
+    }
+    .success-detail {
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 20px auto 0;
+      max-width: 480px;
+      text-align: left;
+    }
+    .success-detail p { margin: 0 0 6px; font-size: 14px; color: #333; }
+    .success-detail p:last-child { margin-bottom: 0; }
+
+    .error-msg {
+      color: #ff4d4f;
+      font-size: 13px;
+      margin-top: 4px;
+      display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    @media (max-width: 480px) {
+      .container { padding: 16px 12px 32px; }
+      .header { padding: 20px 18px; }
+      .header h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="formPage">
+      <div class="header">
+        <h1 id="pageTitle">社保转移情况确认</h1>
+        <p id="pageDesc">正在加载问卷内容，请稍候...</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="badge">1</span>个人信息</div>
+        <div class="form-row">
+          <label>工号<span class="required">*</span></label>
+          <input type="text" id="employeeId" placeholder="请输入您的工号" oninput="lookupByEmployeeId()">
+          <div class="match-dropdown" id="matchDropdown"></div>
+          <div class="match-hint error" id="match-hint">未找到您的信息，请检查工号是否正确，或联系HR确认</div>
+          <div class="error-msg" id="err-employeeId">请填写工号</div>
+        </div>
+        <div class="form-row">
+          <label>姓名<span class="required">*</span></label>
+          <input type="text" id="name" placeholder="请输入您的姓名">
+          <div class="error-msg" id="err-name">请填写姓名</div>
+        </div>
+        <div class="form-row">
+          <label>现社保/公积金缴纳地</label>
+          <input type="text" id="location" placeholder="请填写您的现社保/公积金缴纳地">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="badge">2</span>是否存在以下特殊情况？</div>
+        <div id="specialCases"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="badge">3</span>确认转移意向</div>
+        <div id="finalQuestionArea"></div>
+        <div class="error-msg" id="err-finalAnswer">请选择是否同意转移</div>
+      </div>
+
+      <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">提交确认</button>
+      <div class="footer-note" id="footerNote"></div>
+    </div>
+
+    <div class="success-page" id="successPage">
+      <div class="success-icon">&#10003;</div>
+      <h2>提交成功</h2>
+      <p>感谢您的配合，SSC小管家已收到您的确认信息。</p>
+      <div class="success-detail" id="successDetail"></div>
+    </div>
+  </div>
+
+  <script>
+    let config = null;
+    let matchedEmployee = null;
+    let employeesCache = null;
+
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/config');
+        config = await res.json();
+        renderForm();
+      } catch (e) {
+        document.getElementById('pageDesc').textContent = '问卷加载失败，请刷新页面重试。';
+      }
+    }
+
+    async function lookupByEmployeeId() {
+      const employeeId = document.getElementById('employeeId').value.trim();
+      const hint = document.getElementById('match-hint');
+      const dropdown = document.getElementById('matchDropdown');
+
+      if (!employeeId) {
+        hint.classList.remove('visible');
+        dropdown.classList.remove('visible');
+        matchedEmployee = null;
+        // Clear auto-filled fields and unlock
+        document.getElementById('name').value = '';
+        document.getElementById('name').readOnly = false;
+        document.getElementById('location').value = '';
+        document.getElementById('location').readOnly = false;
+        return;
+      }
+
+      try {
+        // Fetch and cache employee list
+        if (!employeesCache) {
+          const res = await fetch('/api/employees');
+          employeesCache = await res.json();
+        }
+
+        // Exact match by employeeId
+        const results = employeesCache.filter(e => String(e.employeeId) === employeeId);
+        dropdown.innerHTML = '';
+
+        if (results.length === 1) {
+          // Exact match - auto fill
+          selectEmployee(results[0]);
+          hint.classList.remove('visible');
+          dropdown.classList.remove('visible');
+        } else if (results.length > 1) {
+          // Multiple matches - show dropdown
+          hint.classList.remove('visible');
+          results.forEach(emp => {
+            const item = document.createElement('div');
+            item.className = 'match-dropdown-item';
+            item.innerHTML = '<div class="emp-name">' + emp.name + ' (' + emp.employeeId + ')</div><div class="emp-meta">缴纳地：' + (emp.location || '未填写') + '</div>';
+            item.onclick = () => selectEmployee(emp);
+            dropdown.appendChild(item);
+          });
+          dropdown.classList.add('visible');
+        } else {
+          // No match - allow manual input
+          dropdown.classList.remove('visible');
+          matchedEmployee = null;
+          hint.classList.add('visible');
+          // Unlock fields for manual entry
+          document.getElementById('name').readOnly = false;
+          document.getElementById('location').readOnly = false;
+        }
+      } catch (e) {
+        dropdown.classList.remove('visible');
+        hint.classList.remove('visible');
+      }
+    }
+
+    // Keep for backward compatibility
+    function lookupEmployee() {}
+
+
+    function selectEmployee(emp) {
+      matchedEmployee = emp;
+      document.getElementById('employeeId').value = emp.employeeId;
+      document.getElementById('name').value = emp.name;
+      document.getElementById('location').value = emp.location || '';
+      // Lock all personal info fields
+      document.getElementById('employeeId').readOnly = true;
+      document.getElementById('name').readOnly = true;
+      document.getElementById('location').readOnly = true;
+      document.getElementById('matchDropdown').classList.remove('visible');
+      document.getElementById('match-hint').classList.remove('visible');
+    }
+
+    function renderForm() {
+      document.getElementById('pageTitle').textContent = config.title || '社保转移情况确认';
+      document.getElementById('pageDesc').textContent = config.description || '';
+      document.getElementById('footerNote').textContent = config.footerNote || '';
+
+      // 特殊情况 - 两层级展开式
+      const scContainer = document.getElementById('specialCases');
+      scContainer.innerHTML = '';
+      (config.specialCases || []).forEach((cat) => {
+        const card = document.createElement('div');
+        card.className = 'category-card';
+        card.id = 'cat-card-' + cat.id;
+
+        const header = document.createElement('div');
+        header.className = 'category-header';
+        header.innerHTML = `
+          <input type="checkbox" id="cat-check-${cat.id}" onchange="onCategoryChange('${cat.id}')">
+          <span class="category-name">${cat.category}</span>
+          <span class="category-arrow">&#9660;</span>
+        `;
+        header.onclick = (e) => {
+          if (e.target.tagName === 'INPUT') return;
+          const cb = document.getElementById('cat-check-' + cat.id);
+          cb.checked = !cb.checked;
+          onCategoryChange(cat.id);
+        };
+        card.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = 'category-body';
+        body.id = 'cat-body-' + cat.id;
+
+        const optContainer = document.createElement('div');
+        optContainer.className = 'checkbox-group';
+
+        (cat.options || []).forEach((opt) => {
+          const item = document.createElement('label');
+          item.className = 'checkbox-item';
+          item.innerHTML = `
+            <input type="radio" name="case-${cat.id}" value="${opt.id}" data-cat="${cat.id}" onchange="onCaseChange(this)">
+            <div style="flex:1">
+              <div class="text">${opt.label}</div>
+              <div class="impact-box" id="impact-${opt.id}">
+                <div class="impact-title">影响说明</div>
+                <div>${opt.impact || ''}</div>
+              </div>
+              ${opt.allowCustom ? `
+                <div class="custom-input" id="custom-${opt.id}">
+                  <label>请简要描述您的具体情况</label>
+                  <input type="text" id="custom-text-${opt.id}" placeholder="如：异地就医备案中">
+                </div>
+              ` : ''}
+            </div>
+          `;
+          optContainer.appendChild(item);
+        });
+
+        body.appendChild(optContainer);
+
+        // 如果分类没有子选项但有impact，直接显示影响说明
+        if ((!cat.options || cat.options.length === 0) && cat.impact) {
+          const directImpact = document.createElement('div');
+          directImpact.className = 'impact-box';
+          directImpact.id = 'cat-impact-' + cat.id;
+          directImpact.style.display = 'none';
+          directImpact.style.margin = '0';
+          directImpact.innerHTML = '<div class="impact-title">影响说明</div><div>' + cat.impact.replace(/\n/g, '<br>') + '</div>';
+          body.appendChild(directImpact);
+        }
+
+        card.appendChild(body);
+        scContainer.appendChild(card);
+      });
+
+      // "以上情况均无"
+      const noneCard = document.createElement('div');
+      noneCard.className = 'category-card';
+      noneCard.id = 'cat-card-none';
+      noneCard.innerHTML = `
+        <label class="category-header" style="cursor:pointer;">
+          <input type="checkbox" id="cat-check-none" onchange="onNoneSelectedChange(this)">
+          <span class="category-name">${(config.noneOption && config.noneOption.label) || '以上情况均无'}</span>
+          <span class="category-arrow">&#9660;</span>
+        </label>
+        <div class="category-body" id="cat-body-none">
+          <div class="impact-box visible" id="none-hint-box" style="display:none;margin-top:0;">
+            <div class="impact-title">影响说明</div>
+            <div id="none-hint-text"></div>
+          </div>
+        </div>
+      `;
+      scContainer.appendChild(noneCard);
+
+      // 最终问题
+      const fqArea = document.getElementById('finalQuestionArea');
+      const fq = config.finalQuestion || {};
+      let fqHtml = '';
+      if (fq.label && fq.label.trim()) {
+        fqHtml += '<p style="margin:0 0 12px;font-size:15px;color:#333;font-weight:500;">' + fq.label + '</p>';
+      }
+      fqHtml += '<div class="radio-group">';
+      (fq.options || []).forEach(opt => {
+        fqHtml += `
+          <label class="radio-item">
+            <input type="radio" name="finalAnswer" value="${opt.value}" onchange="onFinalAnswerChange(this.value)">
+            <span class="text">${opt.label}</span>
+          </label>
+        `;
+      });
+      fqHtml += '</div>';
+      fqHtml += `
+        <div id="agree-detail-box" style="display:none;margin-top:12px;padding:12px 14px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;font-size:14px;color:#333;">
+          <div style="font-weight:600;margin-bottom:6px;color:#389e0d;">转移详情</div>
+          <div id="agree-detail-content"></div>
+        </div>
+      `;
+      fqArea.innerHTML = fqHtml;
+    }
+
+    function onCategoryChange(catId) {
+      const cb = document.getElementById('cat-check-' + catId);
+      const header = cb.closest('.category-header');
+      const body = document.getElementById('cat-body-' + catId);
+      // 直接影响说明框（无子选项的分类）
+      const directImpact = document.getElementById('cat-impact-' + catId);
+      if (cb.checked) {
+        header.classList.add('expanded');
+        body.classList.add('expanded');
+        if (directImpact) directImpact.style.display = 'block';
+        // 取消所有其他category的选择
+        (config.specialCases || []).forEach(cat => {
+          if (cat.id !== catId) {
+            const otherCb = document.getElementById('cat-check-' + cat.id);
+            if (otherCb && otherCb.checked) {
+              otherCb.checked = false;
+              onCategoryChange(cat.id);
+            }
+          }
+        });
+        // 取消"以上情况均无"
+        const noneCb = document.getElementById('cat-check-none');
+        if (noneCb && noneCb.checked) {
+          noneCb.checked = false;
+          onNoneSelectedChange(noneCb);
+        }
+      } else {
+        header.classList.remove('expanded');
+        body.classList.remove('expanded');
+        if (directImpact) directImpact.style.display = 'none';
+        // 收起时，取消该category下所有已选的radio option
+        const opts = body.querySelectorAll('input[type="radio"]');
+        opts.forEach(o => {
+          if (o.checked) {
+            o.checked = false;
+            const impactBox = document.getElementById('impact-' + o.value);
+            if (impactBox) impactBox.classList.remove('visible');
+            const customBox = document.getElementById('custom-' + o.value);
+            if (customBox) customBox.classList.remove('visible');
+          }
+        });
+      }
+    }
+
+    function onCaseChange(radio) {
+      const catId = radio.dataset.cat;
+      const optId = radio.value;
+
+      // 隐藏同类别下其他选项的影响说明（radio互斥）
+      document.querySelectorAll('input[name="case-' + catId + '"]').forEach(function(r) {
+        var otherImpact = document.getElementById('impact-' + r.value);
+        var otherCustom = document.getElementById('custom-' + r.value);
+        if (otherImpact) otherImpact.classList.toggle('visible', r.checked);
+        if (otherCustom) otherCustom.classList.toggle('visible', r.checked);
+      });
+
+      // 如果勾选了任何具体选项，取消"以上情况均无"
+      var noneCb = document.getElementById('cat-check-none');
+      if (radio.checked && noneCb && noneCb.checked) {
+        noneCb.checked = false;
+        onNoneSelectedChange(noneCb);
+      }
+    }
+
+    function onNoneSelectedChange(checkbox) {
+      const body = document.getElementById('cat-body-none');
+      const hintBox = document.getElementById('none-hint-box');
+      if (checkbox.checked) {
+        body.classList.add('expanded');
+        hintBox.style.display = 'block';
+        updateNoneHint();
+        // 取消所有其他category的选择
+        (config.specialCases || []).forEach(cat => {
+          const cb = document.getElementById('cat-check-' + cat.id);
+          if (cb && cb.checked) {
+            cb.checked = false;
+            onCategoryChange(cat.id);
+          }
+        });
+      } else {
+        body.classList.remove('expanded');
+        hintBox.style.display = 'none';
+      }
+    }
+
+    function updateNoneHint() {
+      const location = document.getElementById('location').value.trim();
+      const hintText = document.getElementById('none-hint-text');
+      const isChengdu = location.includes('成都');
+      // Support both new noneOption.impact and legacy noneSelectedHints
+      let text;
+      if (config.noneOption && config.noneOption.impact) {
+        text = isChengdu ? (config.noneOption.impact.chengdu || '') : (config.noneOption.impact.other || '');
+      } else {
+        const hints = config.noneSelectedHints || {};
+        text = isChengdu ? (hints.chengdu || '') : (hints.other || '');
+      }
+      hintText.innerHTML = text.replace(/\n/g, '<br>');
+    }
+
+    function onFinalAnswerChange(value) {
+      const detailBox = document.getElementById('agree-detail-box');
+      const detailContent = document.getElementById('agree-detail-content');
+      if (value === 'agree') {
+        const info = config.agreeInfo || {};
+        let html = '<p><strong>转移时间：</strong>' + (info.transferTime || '') + '</p>' +
+          '<p><strong>缴费主体：</strong>变更为【' + (info.paymentSubject || '') + '】</p>' +
+          '<p><strong>缴费地：</strong>' + (info.paymentLocation || '') + '</p>' +
+          '<p><strong>缴费基数及比例：</strong>' + (info.paymentBase || '') + '</p>';
+        detailContent.innerHTML = html;
+        detailBox.style.display = 'block';
+      } else {
+        detailBox.style.display = 'none';
+      }
+    }
+
+    function validate() {
+      let ok = true;
+      const name = document.getElementById('name').value.trim();
+      const employeeId = document.getElementById('employeeId').value.trim();
+      const finalAnswer = document.querySelector('input[name="finalAnswer"]:checked');
+
+      document.getElementById('err-name').classList.toggle('visible', !name);
+      document.getElementById('err-employeeId').classList.toggle('visible', !employeeId);
+      document.getElementById('err-finalAnswer').classList.toggle('visible', !finalAnswer);
+
+      if (!name || !employeeId || !finalAnswer) ok = false;
+      return ok;
+    }
+
+    async function submitForm() {
+      if (!validate()) return;
+
+      // 二次确认弹框
+      const finalAnswer = document.querySelector('input[name="finalAnswer"]:checked').value;
+      const messages = config.confirmMessages || {};
+      const confirmMsg = finalAnswer === 'agree' ? (messages.agree || '确认提交？') : (messages.need_discuss || '确认提交？');
+      if (!confirm(confirmMsg)) return;
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = '提交中...';
+
+      const selectedCases = Array.from(document.querySelectorAll('#specialCases input[type="radio"]:checked')).map(cb => cb.value);
+      const customTexts = {};
+      selectedCases.forEach(id => {
+        const customInput = document.getElementById('custom-text-' + id);
+        if (customInput) {
+          customTexts[id] = customInput.value.trim();
+        }
+      });
+
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        employeeId: document.getElementById('employeeId').value.trim(),
+        location: document.getElementById('location').value.trim(),
+        selectedCases,
+        customTexts,
+        finalAnswer
+      };
+
+      try {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showSuccess(data.record);
+        } else {
+          alert(data.error || '提交失败');
+          btn.disabled = false;
+          btn.textContent = '提交确认';
+        }
+      } catch (e) {
+        alert('网络错误，请稍后重试');
+        btn.disabled = false;
+        btn.textContent = '提交确认';
+      }
+    }
+
+    function showSuccess(record) {
+      document.getElementById('formPage').style.display = 'none';
+      document.getElementById('successPage').classList.add('active');
+
+      const caseLabels = record.selectedDetails.map(d => {
+        let label = d.label;
+        if (d.customText) label += `（${d.customText}）`;
+        return label;
+      }).join('、') || '无';
+      document.getElementById('successDetail').innerHTML = `
+        <p><strong>姓名：</strong>${record.name}</p>
+        <p><strong>工号：</strong>${record.employeeId}</p>
+        <p><strong>现社保/公积金缴纳地：</strong>${record.location || '无'}</p>
+        <p><strong>特殊情况：</strong>${caseLabels}</p>
+        <p><strong>转移意向：</strong>${record.finalLabel}</p>
+        <p><strong>提交时间：</strong>${new Date(record.submitTime).toLocaleString('zh-CN')}</p>
+      `;
+    }
+
+    loadConfig();
+  </script>
+</body>
+</html>
