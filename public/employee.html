@@ -246,6 +246,7 @@
       display: none;
     }
     .impact-box.visible { display: block; }
+    .impact-chengdu, .impact-other { display: none; }
     .impact-box .impact-title {
       font-weight: 600;
       margin-bottom: 4px;
@@ -523,6 +524,18 @@
     function lookupEmployee() {}
 
 
+    // 根据员工缴纳地显示/隐藏位置相关的影响说明
+    function updateImpactVisibility() {
+      var location = document.getElementById('location').value.trim();
+      var isChengdu = location.includes('成都');
+      document.querySelectorAll('.impact-chengdu').forEach(function(el) {
+        el.style.display = isChengdu ? 'block' : 'none';
+      });
+      document.querySelectorAll('.impact-other').forEach(function(el) {
+        el.style.display = isChengdu ? 'none' : 'block';
+      });
+    }
+
     function selectEmployee(emp) {
       matchedEmployee = emp;
       document.getElementById('employeeId').value = emp.employeeId;
@@ -534,6 +547,7 @@
       document.getElementById('location').readOnly = true;
       document.getElementById('matchDropdown').classList.remove('visible');
       document.getElementById('match-hint').classList.remove('visible');
+      updateImpactVisibility();
     }
 
     function renderForm() {
@@ -580,7 +594,10 @@
               <div class="text">${opt.label}</div>
               <div class="impact-box" id="impact-${opt.id}">
                 <div class="impact-title">影响说明</div>
-                <div>${opt.impact || ''}</div>
+                ${typeof opt.impact === 'object' && opt.impact !== null
+                  ? `<div class="impact-chengdu">${(opt.impact.chengdu || '').replace(/\n/g, '<br>')}</div><div class="impact-other">${(opt.impact.other || '').replace(/\n/g, '<br>')}</div>`
+                  : `<div>${opt.impact || ''}</div>`
+                }
               </div>
               ${opt.allowCustom ? `
                 <div class="custom-input" id="custom-${opt.id}">
