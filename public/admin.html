@@ -873,7 +873,18 @@
                 </div>
                 <div class="config-row">
                   <label>影响说明</label>
-                  <textarea class="opt-impact" placeholder="员工勾选后显示的影响说明">${escapeHtml(opt.impact)}</textarea>
+                  ${typeof opt.impact === 'object' && opt.impact !== null ? `
+                    <div class="impact-location-group">
+                      <label style="font-size:11px;color:#888;">成都缴纳地</label>
+                      <textarea class="opt-impact-chengdu" placeholder="成都缴纳地显示的影响说明">${escapeHtml(opt.impact.chengdu || '')}</textarea>
+                      <label style="font-size:11px;color:#888;margin-top:4px;">非成都缴纳地</label>
+                      <textarea class="opt-impact-other" placeholder="非成都缴纳地显示的影响说明">${escapeHtml(opt.impact.other || '')}</textarea>
+                      <input type="hidden" class="opt-impact-type" value="location">
+                    </div>
+                  ` : `
+                    <textarea class="opt-impact" placeholder="员工勾选后显示的影响说明">${escapeHtml(typeof opt.impact === 'string' ? opt.impact : '')}</textarea>
+                    <input type="hidden" class="opt-impact-type" value="simple">
+                  `}
                 </div>
                 <div class="config-row" style="display:flex;align-items:center;">
                   <input type="checkbox" class="opt-custom" ${opt.allowCustom ? 'checked' : ''}>
@@ -917,7 +928,13 @@
         </div>
         <div class="config-row">
           <label>影响说明</label>
-          <textarea class="opt-impact" placeholder="员工勾选后显示的影响说明"></textarea>
+          <div class="impact-location-group">
+            <label style="font-size:11px;color:#888;">成都缴纳地</label>
+            <textarea class="opt-impact-chengdu" placeholder="成都缴纳地显示的影响说明"></textarea>
+            <label style="font-size:11px;color:#888;margin-top:4px;">非成都缴纳地</label>
+            <textarea class="opt-impact-other" placeholder="非成都缴纳地显示的影响说明"></textarea>
+            <input type="hidden" class="opt-impact-type" value="location">
+          </div>
         </div>
         <div class="config-row" style="display:flex;align-items:center;">
           <input type="checkbox" class="opt-custom">
@@ -942,12 +959,24 @@
       return Array.from(catItems).map(item => {
         const category = item.querySelector('.cat-category').value.trim();
         const optItems = item.querySelectorAll('.cat-options .config-opt-item');
-        const options = Array.from(optItems).map(optItem => ({
-          id: 'opt_' + Math.random().toString(36).substr(2, 8),
-          label: optItem.querySelector('.opt-label').value.trim(),
-          impact: optItem.querySelector('.opt-impact').value.trim(),
-          allowCustom: optItem.querySelector('.opt-custom').checked
-        })).filter(o => o.label);
+        const options = Array.from(optItems).map(optItem => {
+          const impactType = optItem.querySelector('.opt-impact-type')?.value || 'simple';
+          let impact;
+          if (impactType === 'location') {
+            impact = {
+              chengdu: optItem.querySelector('.opt-impact-chengdu')?.value.trim() || '',
+              other: optItem.querySelector('.opt-impact-other')?.value.trim() || ''
+            };
+          } else {
+            impact = optItem.querySelector('.opt-impact')?.value.trim() || '';
+          }
+          return {
+            id: 'opt_' + Math.random().toString(36).substr(2, 8),
+            label: optItem.querySelector('.opt-label').value.trim(),
+            impact: impact,
+            allowCustom: optItem.querySelector('.opt-custom').checked
+          };
+        }).filter(o => o.label);
         return { id: 'cat_' + Math.random().toString(36).substr(2, 8), category, options };
       }).filter(c => c.category);
     }
