@@ -10,14 +10,20 @@ const app = express();
 const PORT = process.env.PORT || 3456;
 const ADMIN_KEY = process.env.ADMIN_KEY || 'ssc2024';
 
-const DATA_DIR = path.join(__dirname, 'data');
+// Vercel serverless 环境文件系统只读，使用 /tmp 目录存储数据
+const IS_VERCEL = !!process.env.VERCEL;
+const DATA_DIR = IS_VERCEL
+  ? path.join('/tmp', 'ssc-si-transfer-data')
+  : path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 const RESPONSES_FILE = path.join(DATA_DIR, 'responses.json');
 const EMPLOYEES_FILE = path.join(DATA_DIR, 'employees.json');
 
 // 初始化数据文件（如果不存在则创建默认文件）
-const CONFIG_TEMPLATE = path.join(DATA_DIR, 'config-template.json');
+// 模板文件始终在项目 data/ 目录中
+const PROJECT_DATA_DIR = path.join(__dirname, 'data');
+const CONFIG_TEMPLATE = path.join(PROJECT_DATA_DIR, 'config-template.json');
 if (!fs.existsSync(CONFIG_FILE)) {
   if (fs.existsSync(CONFIG_TEMPLATE)) {
     fs.copyFileSync(CONFIG_TEMPLATE, CONFIG_FILE);
