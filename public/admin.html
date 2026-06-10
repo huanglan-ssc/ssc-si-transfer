@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSC管理后台 - 社保转移确认汇总</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      line-height: 1.6;
+    }
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 18px;
+      color: #1a1a1a;
+    }
+    .topbar .actions { display: flex; gap: 10px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover { border-color: #1677ff; color: #1677ff; }
+    .btn-primary {
+      background: #1677ff;
+      color: #fff;
+      border-color: #1677ff;
+    }
+    .btn-primary:hover { background: #4096ff; color: #fff; }
+    .btn-danger {
+      background: #ff4d4f;
+      color: #fff;
+      border-color: #ff4d4f;
+    }
+    .btn-danger:hover { background: #ff7875; color: #fff; }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 24px 48px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .stat-card .label {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .stat-card .value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .stat-card.agree .value { color: #52c41a; }
+    .stat-card.disagree .value { color: #ff4d4f; }
+    .stat-card.discuss .value { color: #faad14; }
+
+    .panel {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      font-weight: 600;
+      font-size: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-body { padding: 16px 20px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+    }
+    th {
+      background: #fafafa;
+      font-weight: 600;
+      color: #555;
+      font-size: 13px;
+      position: sticky;
+      top: 0;
+    }
+    tr:hover { background: #f5f7fa; }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .tag-agree { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+    .tag-disagree { background: #fff2f0; color: #cf1322; border: 1px solid #ffa39e; }
+    .tag-discuss { background: #fffbe6; color: #d48806; border: 1px solid #ffe58f; }
+    .tag-submitted { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+    .tag-not-submitted { background: #fff2f0; color: #cf1322; border: 1px solid #ffa39e; }
+    .btn-remind {
+      background: #1677ff;
+      color: #fff;
+      border-color: #1677ff;
+      padding: 4px 12px;
+      font-size: 12px;
+    }
+    .btn-remind:hover { background: #4096ff; color: #fff; }
+    .btn-remind:disabled {
+      background: #bfbfbf;
+      border-color: #bfbfbf;
+      cursor: not-allowed;
+      color: #fff;
+    }
+    .btn-remind.sent {
+      background: #d9d9d9;
+      border-color: #d9d9d9;
+      color: #888;
+      cursor: not-allowed;
+    }
+    .case-list { max-width: 280px; }
+    .case-list div { margin-bottom: 2px; }
+    .impact-text {
+      color: #666;
+      font-size: 13px;
+      max-width: 320px;
+      white-space: pre-wrap;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 20px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fff;
+    }
+    .tab {
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      color: #555;
+    }
+    .tab.active {
+      color: #1677ff;
+      border-bottom-color: #1677ff;
+      font-weight: 600;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #444; }
+    .form-group input[type="text"], .form-group textarea {
+      width: 100%; padding: 9px 12px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 14px; font-family: inherit;
+    }
+    .form-group textarea { min-height: 60px; resize: vertical; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #1677ff; box-shadow: 0 0 0 3px rgba(22,119,255,0.08); }
+
+    .upload-area {
+      border: 2px dashed #d9d9d9;
+      border-radius: 10px;
+      padding: 32px 24px;
+      text-align: center;
+      color: #888;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-area:hover {
+      border-color: #1677ff;
+      background: #f0f5ff;
+    }
+    .upload-area.dragover {
+      border-color: #1677ff;
+      background: #e6f0ff;
+    }
+
+    .config-cat-item {
+      background: #f8f9fa;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .config-cat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .config-cat-title { font-weight: 600; font-size: 15px; }
+    .config-opt-item {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .config-opt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .config-opt-title { font-weight: 500; font-size: 13px; color: #555; }
+    .config-row { margin-bottom: 8px; }
+    .config-row label { font-size: 12px; color: #666; margin-bottom: 3px; }
+    .config-row input[type="text"], .config-row textarea {
+      width: 100%; padding: 7px 10px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; font-family: inherit;
+    }
+    .config-row textarea { min-height: 45px; resize: vertical; }
+    .config-row input:focus, .config-row textarea:focus { outline: none; border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,0.08); }
+    .config-row input[type="checkbox"] { width: auto; margin-right: 6px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: #888;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 14px 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+      font-size: 14px;
+    }
+    .toast.show { display: flex; }
+    .toast.success { border-left: 4px solid #52c41a; }
+    .toast.error { border-left: 4px solid #ff4d4f; }
+
+    .employee-count { color: #888; font-size: 13px; margin-top: 8px; }
+
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      table { font-size: 13px; }
+      th, td { padding: 8px; }
+      .case-list, .impact-text { max-width: 160px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>SSC管理后台 - 社保转移确认汇总</h1>
+    <div class="actions">
+      <button class="btn" onclick="exportExcel()">导出Excel</button>
+      <button class="btn btn-primary" onclick="refreshData()">刷新数据</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="stats" id="stats"></div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('list')">员工答复汇总</div>
+      <div class="tab" onclick="switchTab('roster')">员工名单</div>
+      <div class="tab" onclick="switchTab('employees')">员工信息上传</div>
+      <div class="tab" onclick="switchTab('config')">问卷内容配置</div>
+    </div>
+
+    <div class="tab-content active" id="tab-list">
+      <div class="panel">
+        <div class="panel-header">员工答复明细</div>
+        <div class="panel-body" style="padding:0;overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>工号</th>
+                <th>姓名</th>
+                <th>现社保/公积金缴纳地</th>
+                <th>是否填写</th>
+                <th>答复内容</th>
+                <th>填写次数</th>
+                <th>催办</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          <div class="empty-state" id="emptyState" style="display:none;">暂无数据</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-roster">
+      <div class="panel">
+        <div class="panel-header">已上传员工名单</div>
+        <div class="panel-body" style="padding:0;overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>工号</th>
+                <th>姓名</th>
+                <th>现社保/公积金缴纳地</th>
+                <th>钉钉ID</th>
+              </tr>
+            </thead>
+            <tbody id="rosterBody"></tbody>
+          </table>
+          <div class="empty-state" id="rosterEmpty" style="display:none;">暂无员工信息，请先上传Excel</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-employees">
+      <div class="panel">
+        <div class="panel-header">批量上传（Excel）</div>
+        <div class="panel-body">
+          <p style="color:#666;font-size:14px;margin:0 0 14px;">请上传包含以下列的Excel文件：<strong>工号、姓名（或花名）、缴纳地</strong>，可选列：<strong>钉钉ID</strong>（用于催办功能，填写员工的钉钉userId）。上传后，员工在问卷中输入工号即可自动匹配姓名和缴纳地。</p>
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <div style="font-size:28px;margin-bottom:8px;">&#128193;</div>
+            <div style="font-size:15px;color:#555;">点击上传或拖拽Excel文件到此处</div>
+            <div style="font-size:12px;color:#999;margin-top:6px;">支持 .xlsx 和 .xls 格式</div>
+          </div>
+          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleFile(event)">
+          <div class="employee-count" id="employeeCount"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">手动添加 / 编辑员工</div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end;">
+            <div class="form-group" style="margin:0;">
+              <label>工号</label>
+              <input type="text" id="manualId" placeholder="员工工号">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>姓名</label>
+              <input type="text" id="manualName" placeholder="员工姓名">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>现社保/公积金缴纳地</label>
+              <input type="text" id="manualLocation" placeholder="如：北京">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>钉钉ID（可选）</label>
+              <input type="text" id="manualDingtalkId" placeholder="用于催办功能">
+            </div>
+            <div>
+              <button class="btn btn-primary" onclick="addManualEmployee()">添加</button>
+            </div>
+          </div>
+          <div style="margin-top:16px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>工号</th>
+                  <th>姓名</th>
+                  <th>现社保/公积金缴纳地</th>
+                  <th>钉钉ID</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="manualEmployeeTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-config">
+      <div class="panel">
+        <div class="panel-header">
+          <span>问卷内容配置</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="switchConfigMode('template')" id="btn-mode-template">模板上传/下载</button>
+            <button class="btn btn-primary" onclick="switchConfigMode('online')" id="btn-mode-online">在线修改</button>
+          </div>
+        </div>
+        <div class="panel-body">
+
+          <!-- 模板模式面板 -->
+          <div id="config-mode-template" style="display:none;">
+            <p style="color:#555;font-size:14px;margin:0 0 16px;">通过JSON模板文件快速刷新配置。下载当前模板可获取完整配置结构，修改后上传即可一键覆盖。</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <button class="btn" onclick="downloadTemplate()">&#128229; 下载当前配置模板</button>
+              <button class="btn btn-primary" onclick="document.getElementById('templateFileInput').click()">&#128228; 上传模板刷新配置</button>
+            </div>
+            <input type="file" id="templateFileInput" accept=".json" style="display:none;" onchange="handleTemplateUpload(event)">
+            <div style="margin-top:20px;padding:16px;background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;">
+              <div style="font-weight:600;color:#d48806;margin-bottom:6px;">使用说明</div>
+              <div style="font-size:13px;color:#666;line-height:1.8;">
+                1. 点击"下载当前配置模板"获取完整JSON文件<br>
+                2. 用文本编辑器打开，按需修改各项配置内容<br>
+                3. 修改完成后点击"上传模板刷新配置"，选择修改后的JSON文件<br>
+                4. 上传后配置将立即覆盖生效，员工端实时可见<br>
+                <span style="color:#ff4d4f;">注意：上传会完全覆盖当前所有配置，请确认内容无误后再上传</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 在线修改模式面板 -->
+          <div id="config-mode-online">
+            <div class="form-group">
+              <label>问卷标题</label>
+              <input type="text" id="cfg-title">
+            </div>
+            <div class="form-group">
+              <label>问卷说明</label>
+              <textarea id="cfg-desc"></textarea>
+            </div>
+            <div class="form-group">
+              <label>特殊情形分组</label>
+              <div id="cfg-cases"></div>
+              <button class="btn" style="margin-top:8px;" onclick="addCategory()">+ 添加分组</button>
+            </div>
+            <div class="form-group">
+              <label>最终确认问题文案</label>
+              <input type="text" id="cfg-final-label">
+            </div>
+            <div class="form-group">
+              <label>页脚提示</label>
+              <input type="text" id="cfg-footer">
+            </div>
+
+            <hr style="border:none;border-top:1px solid #f0f0f0;margin:20px 0;">
+            <h4 style="margin:0 0 14px;font-size:15px;color:#1a1a1a;">同意转移 - 转移详情展示</h4>
+            <div class="form-group">
+              <label>转移时间</label>
+              <input type="text" id="cfg-agree-time" placeholder="如：预计2025年7月完成">
+            </div>
+            <div class="form-group">
+              <label>缴费主体</label>
+              <input type="text" id="cfg-agree-subject" placeholder="如：诚云成都分公司">
+            </div>
+            <div class="form-group">
+              <label>缴费地</label>
+              <input type="text" id="cfg-agree-location" placeholder="如：成都">
+            </div>
+            <div class="form-group">
+              <label>缴费基数及比例</label>
+              <input type="text" id="cfg-agree-base" placeholder="如：按公司统一标准执行，具体以到账信息为准">
+            </div>
+
+            <hr style="border:none;border-top:1px solid #f0f0f0;margin:20px 0;">
+            <h4 style="margin:0 0 14px;font-size:15px;color:#1a1a1a;">提交确认弹框文案</h4>
+            <div class="form-group">
+              <label>选择"同意转移"时的确认文案</label>
+              <textarea id="cfg-confirm-agree" placeholder="员工点击同意转移时弹出的确认提示"></textarea>
+            </div>
+            <div class="form-group">
+              <label>选择"需要进一步沟通"时的确认文案</label>
+              <textarea id="cfg-confirm-discuss" placeholder="员工点击需要沟通时弹出的确认提示"></textarea>
+            </div>
+
+            <hr style="border:none;border-top:1px solid #f0f0f0;margin:20px 0;">
+            <h4 style="margin:0 0 14px;font-size:15px;color:#1a1a1a;">"以上情况均无"提示文案</h4>
+            <div class="form-group">
+              <label>缴纳地为成都时的提示</label>
+              <textarea id="cfg-none-chengdu" style="min-height:80px;" placeholder="同城市内主体变更时的提示文案"></textarea>
+            </div>
+            <div class="form-group">
+              <label>缴纳地为其他城市时的提示</label>
+              <textarea id="cfg-none-other" style="min-height:120px;" placeholder="跨城市转移时的详细提示文案"></textarea>
+            </div>
+          </div>
+
+        </div>
+        <div class="panel-header" style="border-top:1px solid #f0f0f0;border-bottom:none;">
+          <span></span>
+          <button class="btn btn-primary" onclick="saveConfig()" id="saveConfigBtn">保存配置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const key = params.get('key') || '';
+    let currentConfig = null;
+    let currentResponses = [];
+    let currentEmployees = [];
+
+    function showToast(msg, type='success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    async function fetchJSON(url) {
+      const res = await fetch(url + '&key=' + encodeURIComponent(key));
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || '请求失败');
+      }
+      return res.json();
+    }
+
+    async function postJSON(url, body) {
+      const res = await fetch(url + '?key=' + encodeURIComponent(key), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || '请求失败');
+      }
+      return res.json();
+    }
+
+    async function refreshData() {
+      try {
+        const [config, responses, employees] = await Promise.all([
+          fetchJSON('/api/config-admin?'),
+          fetchJSON('/api/responses?'),
+          fetchJSON('/api/employees?')
+        ]);
+        currentConfig = config;
+        currentResponses = responses;
+        currentEmployees = employees;
+        renderStats();
+        renderTable();
+        renderRoster(employees);
+        renderConfig();
+        showToast('数据已刷新');
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function renderStats() {
+      // 按员工去重，只取最新提交
+      const latestMap = new Map();
+      currentResponses.forEach(r => {
+        const existing = latestMap.get(r.employeeId);
+        if (!existing || new Date(r.submitTime) > new Date(existing.submitTime)) {
+          latestMap.set(r.employeeId, r);
+        }
+      });
+      const latest = Array.from(latestMap.values());
+
+      const total = latest.length;
+      const agree = latest.filter(r => r.finalAnswer === 'agree').length;
+      const discuss = latest.filter(r => r.finalAnswer === 'need_discuss').length;
+      const html = `
+        <div class="stat-card"><div class="label">已收集（去重）</div><div class="value">${total}</div></div>
+        <div class="stat-card agree"><div class="label">同意转移</div><div class="value">${agree}</div></div>
+        <div class="stat-card discuss"><div class="label">需沟通</div><div class="value">${discuss}</div></div>
+      `;
+      document.getElementById('stats').innerHTML = html;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const empty = document.getElementById('emptyState');
+
+      if (!currentEmployees.length) {
+        tbody.innerHTML = '';
+        empty.style.display = '';
+        empty.textContent = '暂无员工信息，请先在"员工信息上传"标签页上传员工名单';
+        return;
+      }
+      empty.style.display = 'none';
+
+      // Build latest response map by employeeId
+      const responseMap = new Map();
+      currentResponses.forEach(r => {
+        const existing = responseMap.get(r.employeeId);
+        if (!existing || new Date(r.submitTime) > new Date(existing.submitTime)) {
+          responseMap.set(r.employeeId, r);
+        }
+      });
+
+      tbody.innerHTML = currentEmployees.map(emp => {
+        const r = responseMap.get(emp.employeeId);
+        const isSubmitted = !!r;
+        const statusTag = isSubmitted
+          ? '<span class="tag tag-submitted">已提交</span>'
+          : '<span class="tag tag-not-submitted">未提交</span>';
+        const countBadge = isSubmitted ? (r.submitCount > 1 ? `<span style="color:#ff4d4f;font-weight:600;">第${r.submitCount}次</span>` : `第${r.submitCount || 1}次`) : '-';
+
+        let answerHtml = '-';
+        if (r) {
+          let tagClass = 'tag-discuss';
+          if (r.finalAnswer === 'agree') tagClass = 'tag-agree';
+          if (r.finalAnswer === 'disagree') tagClass = 'tag-disagree';
+          const caseLabels = r.selectedDetails.map(d => {
+            let label = d.label;
+            if (d.customText) label += `（${d.customText}）`;
+            return label;
+          }).join('；') || '无';
+          answerHtml = `<span class="tag ${tagClass}">${escapeHtml(r.finalLabel)}</span><br><span style="font-size:12px;color:#666;">${escapeHtml(caseLabels)}</span>`;
+        }
+
+        const remindBtn = isSubmitted
+          ? '<span style="color:#888;font-size:12px;">-</span>'
+          : `<button class="btn btn-remind" onclick="remindEmployee('${escapeHtml(emp.employeeId)}', this)">催办</button>`;
+
+        return `<tr>
+          <td>${escapeHtml(emp.employeeId)}</td>
+          <td>${escapeHtml(emp.name)}</td>
+          <td>${escapeHtml(emp.location || '')}</td>
+          <td>${statusTag}</td>
+          <td>${answerHtml}</td>
+          <td>${countBadge}</td>
+          <td>${remindBtn}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function deleteResponse(id) {
+      if (!confirm('确定要删除这条记录吗？')) return;
+      try {
+        await postJSON('/api/delete-response', { id });
+        showToast('记录已删除');
+        refreshData();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function remindEmployee(employeeId, btn) {
+      btn.textContent = '发送中...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/remind/' + encodeURIComponent(employeeId) + '?key=' + encodeURIComponent(key), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '发送失败');
+        }
+        btn.textContent = '已催办';
+        btn.className = 'btn btn-remind sent';
+        showToast('催办消息已发送');
+      } catch (e) {
+        btn.textContent = '催办';
+        btn.disabled = false;
+        showToast(e.message, 'error');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+    }
+
+    // File upload handling
+    const uploadArea = document.getElementById('uploadArea');
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length) processFile(files[0]);
+    });
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      if (file) processFile(file);
+    }
+
+    function processFile(file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          if (rows.length < 2) {
+            showToast('Excel文件为空或格式不正确', 'error');
+            return;
+          }
+          const headers = rows[0];
+          const dataRows = rows.slice(1).map(row => {
+            const obj = {};
+            headers.forEach((h, i) => { obj[h] = row[i]; });
+            return obj;
+          }).filter(r => r['花名'] || r['姓名'] || r['工号']);
+
+          const res = await postJSON('/api/upload-employees', { data: dataRows });
+          if (res.success) {
+            showToast(`成功导入 ${res.count} 名员工信息`);
+            loadEmployeeCount();
+          }
+        } catch (err) {
+          showToast('解析Excel失败：' + err.message, 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    async function loadEmployeeCount() {
+      try {
+        const employees = await fetchJSON('/api/employees?');
+        document.getElementById('employeeCount').textContent = `当前已导入 ${employees.length} 名员工`;
+        renderRoster(employees);
+        renderManualEmployeeTable(employees);
+      } catch (e) {}
+    }
+
+    function renderRoster(employees) {
+      const tbody = document.getElementById('rosterBody');
+      const empty = document.getElementById('rosterEmpty');
+      if (!employees || !employees.length) {
+        tbody.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+      tbody.innerHTML = employees.map(e => `<tr>
+        <td>${escapeHtml(e.employeeId)}</td>
+        <td>${escapeHtml(e.name)}</td>
+        <td>${escapeHtml(e.location || '')}</td>
+        <td>${escapeHtml(e.dingtalkId || '-')}</td>
+      </tr>`).join('');
+    }
+
+    function renderManualEmployeeTable(employees) {
+      const tbody = document.getElementById('manualEmployeeTable');
+      if (!employees || !employees.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:20px;">暂无员工，请通过上方表单添加或Excel批量上传</td></tr>';
+        return;
+      }
+      tbody.innerHTML = employees.map(e => `<tr>
+        <td>${escapeHtml(e.employeeId)}</td>
+        <td>${escapeHtml(e.name)}</td>
+        <td>${escapeHtml(e.location || '')}</td>
+        <td>${escapeHtml(e.dingtalkId || '-')}</td>
+        <td><button class="btn" style="padding:4px 10px;font-size:12px;color:#ff4d4f;border-color:#ff4d4f;" onclick="deleteEmployee('${escapeHtml(e.employeeId)}')">删除</button></td>
+      </tr>`).join('');
+    }
+
+    async function addManualEmployee() {
+      const name = document.getElementById('manualName').value.trim();
+      const employeeId = document.getElementById('manualId').value.trim();
+      const location = document.getElementById('manualLocation').value.trim();
+      const dingtalkId = document.getElementById('manualDingtalkId').value.trim();
+      if (!name || !employeeId) {
+        showToast('姓名和工号为必填', 'error');
+        return;
+      }
+      try {
+        await postJSON('/api/add-employee', { name, employeeId, location, dingtalkId });
+        showToast('员工已添加');
+        document.getElementById('manualName').value = '';
+        document.getElementById('manualId').value = '';
+        document.getElementById('manualLocation').value = '';
+        document.getElementById('manualDingtalkId').value = '';
+        loadEmployeeCount();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function deleteEmployee(employeeId) {
+      if (!confirm('确定要删除该员工信息吗？')) return;
+      try {
+        await postJSON('/api/delete-employee', { employeeId });
+        showToast('员工已删除');
+        loadEmployeeCount();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function renderConfig() {
+      if (!currentConfig) return;
+      document.getElementById('cfg-title').value = currentConfig.title || '';
+      document.getElementById('cfg-desc').value = currentConfig.description || '';
+      document.getElementById('cfg-final-label').value = currentConfig.finalQuestion?.label || '';
+      document.getElementById('cfg-footer').value = currentConfig.footerNote || '';
+      renderConfigCategories(currentConfig.specialCases || []);
+
+      // 转移详情
+      const ai = currentConfig.agreeInfo || {};
+      document.getElementById('cfg-agree-time').value = ai.transferTime || '';
+      document.getElementById('cfg-agree-subject').value = ai.paymentSubject || '';
+      document.getElementById('cfg-agree-location').value = ai.paymentLocation || '';
+      document.getElementById('cfg-agree-base').value = ai.paymentBase || '';
+
+      // 确认弹框文案
+      const cm = currentConfig.confirmMessages || {};
+      document.getElementById('cfg-confirm-agree').value = cm.agree || '';
+      document.getElementById('cfg-confirm-discuss').value = cm.need_discuss || '';
+
+      // 以上情况均无提示
+      const nh = currentConfig.noneSelectedHints || {};
+      document.getElementById('cfg-none-chengdu').value = nh.chengdu || '';
+      document.getElementById('cfg-none-other').value = nh.other || '';
+    }
+
+    function renderConfigCategories(cats) {
+      const container = document.getElementById('cfg-cases');
+      container.innerHTML = cats.map((cat, catIdx) => `
+        <div class="config-cat-item" data-cat-idx="${catIdx}">
+          <div class="config-cat-header">
+            <span class="config-cat-title">分组 ${catIdx + 1}</span>
+            <button class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="removeCategory(${catIdx})">删除分组</button>
+          </div>
+          <div class="config-row">
+            <label>分组名称（如：孕期/产期/哺乳期）</label>
+            <input type="text" class="cat-category" value="${escapeHtml(cat.category)}" placeholder="分组名称">
+          </div>
+          <div style="margin:10px 0 6px;font-size:13px;font-weight:500;color:#555;">选项列表</div>
+          <div class="cat-options">
+            ${(cat.options || []).map((opt, optIdx) => `
+              <div class="config-opt-item" data-opt-idx="${optIdx}">
+                <div class="config-opt-header">
+                  <span class="config-opt-title">选项 ${optIdx + 1}</span>
+                  <button class="btn" style="padding:3px 8px;font-size:11px;" onclick="removeOption(this)">删除</button>
+                </div>
+                <div class="config-row">
+                  <label>选项文案</label>
+                  <input type="text" class="opt-label" value="${escapeHtml(opt.label)}" placeholder="如：孕早期 (1-3个月)">
+                </div>
+                <div class="config-row">
+                  <label>影响说明</label>
+                  <textarea class="opt-impact" placeholder="员工勾选后显示的影响说明">${escapeHtml(opt.impact)}</textarea>
+                </div>
+                <div class="config-row" style="display:flex;align-items:center;">
+                  <input type="checkbox" class="opt-custom" ${opt.allowCustom ? 'checked' : ''}>
+                  <label style="margin:0;font-size:12px;">允许员工自定义填写具体内容</label>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <button class="btn" style="margin-top:6px;padding:5px 12px;font-size:12px;" onclick="addOption(this)">+ 添加选项</button>
+        </div>
+      `).join('');
+    }
+
+    function addCategory() {
+      const cats = collectCategories();
+      cats.push({ id: 'cat_' + Date.now(), category: '', options: [] });
+      renderConfigCategories(cats);
+    }
+
+    function removeCategory(idx) {
+      const cats = collectCategories();
+      cats.splice(idx, 1);
+      renderConfigCategories(cats);
+    }
+
+    function addOption(btn) {
+      const catItem = btn.closest('.config-cat-item');
+      const optContainer = catItem.querySelector('.cat-options');
+      const optIdx = optContainer.children.length;
+      const div = document.createElement('div');
+      div.className = 'config-opt-item';
+      div.dataset.optIdx = optIdx;
+      div.innerHTML = `
+        <div class="config-opt-header">
+          <span class="config-opt-title">选项 ${optIdx + 1}</span>
+          <button class="btn" style="padding:3px 8px;font-size:11px;" onclick="removeOption(this)">删除</button>
+        </div>
+        <div class="config-row">
+          <label>选项文案</label>
+          <input type="text" class="opt-label" placeholder="如：孕早期 (1-3个月)">
+        </div>
+        <div class="config-row">
+          <label>影响说明</label>
+          <textarea class="opt-impact" placeholder="员工勾选后显示的影响说明"></textarea>
+        </div>
+        <div class="config-row" style="display:flex;align-items:center;">
+          <input type="checkbox" class="opt-custom">
+          <label style="margin:0;font-size:12px;">允许员工自定义填写具体内容</label>
+        </div>
+      `;
+      optContainer.appendChild(div);
+    }
+
+    function removeOption(btn) {
+      const optItem = btn.closest('.config-opt-item');
+      const optContainer = optItem.parentElement;
+      optItem.remove();
+      Array.from(optContainer.children).forEach((child, i) => {
+        child.dataset.optIdx = i;
+        child.querySelector('.config-opt-title').textContent = '选项 ' + (i + 1);
+      });
+    }
+
+    function collectCategories() {
+      const catItems = document.querySelectorAll('#cfg-cases .config-cat-item');
+      return Array.from(catItems).map(item => {
+        const category = item.querySelector('.cat-category').value.trim();
+        const optItems = item.querySelectorAll('.cat-options .config-opt-item');
+        const options = Array.from(optItems).map(optItem => ({
+          id: 'opt_' + Math.random().toString(36).substr(2, 8),
+          label: optItem.querySelector('.opt-label').value.trim(),
+          impact: optItem.querySelector('.opt-impact').value.trim(),
+          allowCustom: optItem.querySelector('.opt-custom').checked
+        })).filter(o => o.label);
+        return { id: 'cat_' + Math.random().toString(36).substr(2, 8), category, options };
+      }).filter(c => c.category);
+    }
+
+    async function saveConfig() {
+      const payload = {
+        title: document.getElementById('cfg-title').value.trim(),
+        description: document.getElementById('cfg-desc').value.trim(),
+        specialCases: collectCategories(),
+        finalQuestion: {
+          label: document.getElementById('cfg-final-label').value.trim(),
+          options: [
+            { value: 'agree', label: '同意转移' },
+            { value: 'need_discuss', label: '需要进一步沟通' }
+          ]
+        },
+        footerNote: document.getElementById('cfg-footer').value.trim(),
+        agreeInfo: {
+          transferTime: document.getElementById('cfg-agree-time').value.trim(),
+          paymentSubject: document.getElementById('cfg-agree-subject').value.trim(),
+          paymentLocation: document.getElementById('cfg-agree-location').value.trim(),
+          paymentBase: document.getElementById('cfg-agree-base').value.trim()
+        },
+        confirmMessages: {
+          agree: document.getElementById('cfg-confirm-agree').value.trim(),
+          need_discuss: document.getElementById('cfg-confirm-discuss').value.trim()
+        },
+        noneSelectedHints: {
+          chengdu: document.getElementById('cfg-none-chengdu').value.trim(),
+          other: document.getElementById('cfg-none-other').value.trim()
+        }
+      };
+      try {
+        await postJSON('/api/config-admin', payload);
+        currentConfig = payload;
+        showToast('配置已保存，员工端将实时生效');
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function exportExcel() {
+      window.open('/api/export?key=' + encodeURIComponent(key), '_blank');
+    }
+
+    function switchConfigMode(mode) {
+      const onlinePanel = document.getElementById('config-mode-online');
+      const templatePanel = document.getElementById('config-mode-template');
+      const btnOnline = document.getElementById('btn-mode-online');
+      const btnTemplate = document.getElementById('btn-mode-template');
+      const saveBtn = document.getElementById('saveConfigBtn');
+      if (mode === 'template') {
+        onlinePanel.style.display = 'none';
+        templatePanel.style.display = 'block';
+        btnTemplate.classList.add('btn-primary');
+        btnTemplate.classList.remove('btn');
+        btnOnline.classList.remove('btn-primary');
+        btnOnline.classList.add('btn');
+        saveBtn.style.display = 'none';
+      } else {
+        onlinePanel.style.display = 'block';
+        templatePanel.style.display = 'none';
+        btnOnline.classList.add('btn-primary');
+        btnOnline.classList.remove('btn');
+        btnTemplate.classList.remove('btn-primary');
+        btnTemplate.classList.add('btn');
+        saveBtn.style.display = '';
+      }
+    }
+
+    function buildFullConfigJSON() {
+      return {
+        title: currentConfig?.title || '',
+        description: currentConfig?.description || '',
+        specialCases: currentConfig?.specialCases || [],
+        finalQuestion: currentConfig?.finalQuestion || {
+          title: '确认转移意向',
+          label: '',
+          options: [
+            { value: 'agree', label: '同意转移' },
+            { value: 'need_discuss', label: '需要进一步沟通' }
+          ]
+        },
+        footerNote: currentConfig?.footerNote || '',
+        agreeInfo: currentConfig?.agreeInfo || {
+          transferTime: '预计【XXXX年XX月】完成',
+          paymentSubject: '诚云成都分公司',
+          paymentLocation: '成都',
+          paymentBase: '公司会同步将五险一金缴纳基数调至新标准（根据您2025年1\u201312月的实际平均工资），本次基数将作为2026年度全年执行标准，2026年度将不再调整，请知悉。'
+        },
+        confirmMessages: currentConfig?.confirmMessages || {
+          agree: '请您确认信息填报无误，我们将按预计时间完成转移，转移完成后，我们将不再发送通知，您可自行查看新主体的缴费详情。',
+          need_discuss: '请您确认信息填报无误，提交后，SSC小管家会在1-2个工作日内与您电话确认。'
+        },
+        noneSelectedHints: currentConfig?.noneSelectedHints || {
+          chengdu: '【医保待遇】本次转移为同城市内主体变更，您的医保待遇可连续享受，无等待期。\n\n【公积金】公积金缴存记录连续，不影响未来贷款资格。\n\n【个人所得税】需在个税APP中【专项附加扣除】修改"申报方式"将"扣缴义务人"改为：杭州诚云科技有限公司成都分公司。并根据成都的标准重新核对【专项附加扣除】，需如实填报。',
+          other: '由于本次涉及跨主体/跨地区转移，以下事项请您特别关注：\n\n【医保待遇】请确认您此前有6个月及以上连续社保缴纳记录（含其他省份），您可在四川医保小程序申请医保关系转移合并，无医保等待期，预计当月医保扣款到账后即可正常使用。\n\n【公积金】可通过公积金异地转移接续合并缴存记录，可视为正常连续缴存，不影响未来贷款资格。\n\n【个人所得税】需在个税APP中【专项附加扣除】修改"申报方式"将"扣缴义务人"改为：杭州诚云科技有限公司成都分公司。并根据成都的标准重新核对【专项附加扣除】，需如实填报。'
+        }
+      };
+    }
+
+    function downloadTemplate() {
+      const data = buildFullConfigJSON();
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'config-template.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('模板已下载');
+    }
+
+    async function handleTemplateUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      event.target.value = '';
+      if (!confirm('上传模板将完全覆盖当前配置，确认继续？')) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data.specialCases) throw new Error('缺少 specialCases 字段');
+        await postJSON('/api/config-admin', data);
+        currentConfig = data;
+        renderConfig();
+        showToast('模板配置已上传并生效');
+      } catch (e) {
+        showToast('上传失败：' + (e.message || 'JSON格式不正确'), 'error');
+      }
+    }
+
+    refreshData();
+    loadEmployeeCount();
+
+    // 每10秒自动刷新数据
+    setInterval(() => { refreshData(); }, 10000);
+  </script>
+</body>
+</html>
